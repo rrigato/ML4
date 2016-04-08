@@ -43,6 +43,138 @@ for (i in 2:(ncol(train)-1))
 }
 
 
+#xgboost
+library(Ckmeans.1d.dp)
+library(xgboost)
+library(methods)
+library(data.table)
+library(magrittr)
+library(Matrix)
+
+
+
+
+
+#stores the ids in a vector and removes id from data frames
+train2id = train2[,1]
+train2 = train2[,-c(1)]
+
+test3id = test2[,1]
+test3 = test2[,-c(1)]
+
+#checks that the number of ids in the vector is equal to the number of rows in 
+#the data frames
+length(train2id) == nrow(train2)
+length(test3id) == nrow(test3)
+
+
+
+
+
+
+#saves the outcome variable into a seperate vector
+train2_response = train2$TARGET
+test3_response = test3$TARGET
+
+#removes outcome vector from the data_frame
+test3 = test3[,-c(ncol(test3))]
+train2 = train2[,-c(ncol(train2))]
+
+
+
+length(train2_response) == nrow(train2)
+length(test3_response) == nrow(test3)
+
+
+train2Matrix = data.matrix(train2)
+
+
+test3Matrix = data.matrix(test3)
+
+
+
+
+
+#used to keep only those variables in the importance matrix
+#train2Matrix = train2Matrix[,keep]
+#test3Matrix = test3Matrix[,keep]
+
+
+
+
+
+
+#AUC is equal to the ROC curve
+#cross_validation parameters
+numberOfClasses = 2
+param = list( "objective" = "binary:logistic",
+		"eval_metric" = "auc"
+		)
+cv.nround <- 250
+cv.nfold <- 3
+
+#setting up cross_validation
+bst.cv = xgb.cv(param=param, data = train2Matrix, label = train2_response, 
+                nfold = cv.nfold, nrounds = cv.nround)
+
+#test for optimal nround
+bst.cv[which(min(bst.cv$test.logloss.mean) == bst.cv$test.logloss.mean),]
+
+#sets the number of rounds based on the number of rounds determined by cross_validation
+nround = which(min(bst.cv$test.auc.mean) == bst.cv$test.auc.mean)
+#actual xgboost
+bst = xgboost(param=param, data = train2Matrix, label = train2_response,
+		gamma = .1, eta = .1, nrounds=nround,
+		subsample = .75)
+
+
+
+
+
+
+
+# Get the feature real names
+names <- dimnames(train2Matrix)[[2]]
+
+# Compute feature importance matrix
+importance_matrix <- xgb.importance(names, model = bst); importance_matrix
+
+# Nice graph for importance
+xgb.plot.importance(importance_matrix[1:100,])
+
+
+
+#the predictions are in a nrow(test3)*3 long vector
+#bstPred[1:3] is the probability of 0,1,2 for fault_severity
+#for the first observation of test2
+#has to be a numeric matrix just like the training set
+bstPred = predict(bst, test3Matrix)
+is.vector(bstPred)
+str(bstPred)
+
+
+#initialize output frame
+xgFrame = data.frame(matrix(nrow= nrow(test2), ncol=3))
+xgFrame = rename(xgFrame, c("X1" = "id", "X2" = "predictedProb", "X3" = "Actual")) 
+
+#Puts the ids for the observations into the first column of xgFrame[,1]
+xgFrame[,1] = test3id
+xgFrame[,3] = test3_response
+#test to make sure ids are the same
+sum(xgFrame[,1] != test3id)
+
+
+#probability of y = 1
+xgFrame[,2] = bstPred
+
+
+xgFrame2 = xgFrame
+
+
+
+log_loss(xgFrame)
+
+
 
 
 
