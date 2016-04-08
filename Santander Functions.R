@@ -26,13 +26,21 @@ outcome = train2$TARGET
 #Gets the area under the ROC curve
 temp =roc(outcome, predict)
 
-temp2 = gbmParse(train2, test2)
+temp2 = gbmParse(train2[,-c(no_var)], test2[,-c(no_var)])
 
 
 
-
-
-
+n_counter = 1
+no_var = numeric()
+for (i in 2:(ncol(train)-1))
+{
+	if (sd(train[,i]) <.01)
+	{
+		no_var[n_counter] = i
+		n_counter = n_counter +1
+	}
+	
+}
 
 
 
@@ -66,7 +74,7 @@ gbmParse <- function (train2, test2) {
 	library(plyr)
 	
 	#runs gbm takes out id and v22 because v22 has too many levels for a category
-	bTree = gbm(TARGET~. , distribution = "bernoulli", n.trees = 30, shrinkage = .1,
+	bTree = gbm(TARGET~. , distribution = "bernoulli", n.trees = 300, shrinkage = .1,
 			interaction.depth =2,  data = train2)
 
 	#runs the gbm model on the test set giving back an output of probabilities
@@ -84,18 +92,17 @@ gbmParse <- function (train2, test2) {
 	outputFrame[,1] = test2[,1]
 	outputFrame[,2] = bTreeP[,1]
 	outputFrame[,3] = test2$TARGET
+	outputFrame[,4] = 0
 
-	if (outputFrame[,2] >=.5)
+	for (i in 1:nrow(outputFrame))
 	{
-		outputFrame[,4] = 1
-	}
+		if (outputFrame[i,2] >= .03)
+		{
+			outputFrame[i,4] = 1
+		}
 	
-	if(outputFrame[,2] < .5 )
-	{
-		outputFrame[,4] = 0
+
 	}
-
-
 	#runs log_loss on train set
 	print(roc(outputFrame[,3], outputFrame[,4]))
 	
