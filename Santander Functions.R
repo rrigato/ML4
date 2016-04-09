@@ -50,7 +50,7 @@ library(methods)
 library(data.table)
 library(magrittr)
 library(Matrix)
-
+library(plyr)
 
 
 
@@ -108,7 +108,8 @@ test3Matrix = data.matrix(test3)
 #cross_validation parameters
 numberOfClasses = 2
 param = list( "objective" = "binary:logistic",
-		"eval_metric" = "auc"
+		"eval_metric" = "auc",
+		"scale_pos_weight" = nrow(train)/ sum(train$TARGET)
 		)
 cv.nround <- 250
 cv.nfold <- 3
@@ -118,14 +119,14 @@ bst.cv = xgb.cv(param=param, data = train2Matrix, label = train2_response,
                 nfold = cv.nfold, nrounds = cv.nround)
 
 #test for optimal nround
-bst.cv[which(min(bst.cv$test.logloss.mean) == bst.cv$test.logloss.mean),]
+bst.cv[which(max(bst.cv$test.auc.mean) == bst.cv$test.auc.mean),]
 
 #sets the number of rounds based on the number of rounds determined by cross_validation
-nround = which(min(bst.cv$test.auc.mean) == bst.cv$test.auc.mean)
+nround = which(max(bst.cv$test.auc.mean) == bst.cv$test.auc.mean)
 #actual xgboost
 bst = xgboost(param=param, data = train2Matrix, label = train2_response,
 		gamma = .1, eta = .1, nrounds=nround,
-		subsample = .75)
+		subsample = .75, max_delta_step = 1)
 
 
 
@@ -140,7 +141,7 @@ names <- dimnames(train2Matrix)[[2]]
 importance_matrix <- xgb.importance(names, model = bst); importance_matrix
 
 # Nice graph for importance
-xgb.plot.importance(importance_matrix[1:100,])
+#xgb.plot.importance(importance_matrix[1:100,])
 
 
 
@@ -154,8 +155,9 @@ str(bstPred)
 
 
 #initialize output frame
-xgFrame = data.frame(matrix(nrow= nrow(test2), ncol=3))
-xgFrame = rename(xgFrame, c("X1" = "id", "X2" = "predictedProb", "X3" = "Actual")) 
+xgFrame = data.frame(matrix(nrow= nrow(test2), ncol=4))
+xgFrame = rename(xgFrame, c("X1" = "id", "X2" = "predictedProb",
+			 "X3" = "Actual", "X4" = "rounded")) 
 
 #Puts the ids for the observations into the first column of xgFrame[,1]
 xgFrame[,1] = test3id
@@ -167,12 +169,24 @@ sum(xgFrame[,1] != test3id)
 #probability of y = 1
 xgFrame[,2] = bstPred
 
+xgFrame[,4] = 0
+for (i in 1:nrow(xgFrame))
+	{
+		if (xgFrame[i,2] >= .05)
+		{
+			xgFrame[i,4] = 1
+		}
+	
+
+	}
+
 
 xgFrame2 = xgFrame
 
 
 
-log_loss(xgFrame)
+
+roc(xgFrame[,3],xgFrame[,4])
 
 
 
