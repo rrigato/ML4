@@ -40,7 +40,30 @@ train2 = train2[,-c(no_var)]
 test2 = test2[,-c(no_var)]
 explan = 2:(ncol(train2) -1)
 
-result = deepL(train2, test2, explan)
+dlFrame = deepL(train2, test2, explan)
+
+
+#initalize all predictions to zero
+dlFrame[,4] = numeric(nrow(dlFrame))
+
+#if the probability is over a specified level, that
+#observation is predicted  a one
+for (i in 1:nrow(dlFrame))
+	{
+		if (dlFrame[i,2] >= .2)
+		{
+			dlFrame[i,4] = 1
+		}
+	
+
+	}
+
+#proportion of ones
+sum(dlFrame[,4])/nrow(dlFrame)
+
+#Reciever operating curve for predictions and actual
+roc(dlFrame[,4],dlFrame[,3])
+
 ######################################################################
 #Deep Learning in H2o log_loss:.4868497
 #
@@ -96,9 +119,7 @@ deepL <- function(train5, test5, explanFeatures)
 	#adds the actual output to the output frame
 	outputFrame[,3] = test2$TARGET
 
-
-	#runs the log_loss model
-	roc(outputFrame[,2], outputFrame[,3])
+	#put roc here
 
 	#returns the probabilities in a data frame
 	return(outputFrame);
