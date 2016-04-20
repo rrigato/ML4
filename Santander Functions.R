@@ -16,7 +16,7 @@ plot(train$ID,train$TARGET,  type = 'p')
 
 
 #calls the split function to divide the train dataset
-bothFrames = split(train, .8)
+bothFrames = split(train, .85)
 train2 = bothFrames[[1]]
 test2 = bothFrames[[2]]
 
@@ -38,6 +38,8 @@ for (i in 2:(ncol(train)-1))
 
 train2 = train2[,-c(no_var)]
 test2 = test2[,-c(no_var)]
+test = test[,-c(no_var)]
+
 explan = 2:(ncol(train2) -1)
 
 dlFrame = deepL(train2, test2, explan)
