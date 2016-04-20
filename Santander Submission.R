@@ -24,8 +24,9 @@ is.vector(bstPred)
 str(bstPred)
 
 #initialize output frame
-finalFrame = data.frame(matrix(nrow= nrow(test), ncol=2))
-finalFrame = rename(finalFrame, c("X1" = "ID", "X2" = "PredictedProb")) 
+finalFrame = data.frame(matrix(nrow= nrow(test), ncol=3))
+finalFrame = rename(finalFrame, c("X1" = "ID", "X2" = "PredictedProb",
+					"X3" = "TARGET")) 
 
 #Puts the ids for the observations into the first column of finalFrame[,1]
 finalFrame[,1] = test3id
@@ -37,6 +38,20 @@ sum(finalFrame[,1] != test3id)
 #probability of y = 1
 finalFrame[,2] = bstPred
 
+
+finalFrame[,3] = 0
+for (i in 1:nrow(finalFrame))
+	{
+		if (finalFrame[i,2] >= .83)
+		{
+			finalFrame[i,3] = 1
+		}
+	
+
+	}
+
+
+
 #validation
 nrow(finalFrame) == length(unique(test3id))
 sum(finalFrame$id != unique(test3id))
@@ -46,8 +61,13 @@ sum(is.na(finalFrame))
 sum(finalFrame[,2])
 
 
+#for train this is about 3.956853%
+sum(finalFrame[,3])/nrow(test)
 
-write.csv(finalFrame, "C:\\Users\\Randy\\Downloads\\Kaggle Santander\\Results1.csv",
+
+write.csv(finalFrame, "C:\\Users\\Randy\\Downloads\\Kaggle Santander\\twoAll.csv",
+		row.names = FALSE)
+write.csv(finalFrame[,-c(2)], "C:\\Users\\Randy\\Downloads\\Kaggle Santander\\Results2.csv",
 		row.names = FALSE)
 
 

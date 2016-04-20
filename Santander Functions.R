@@ -52,7 +52,7 @@ dlFrame[,4] = numeric(nrow(dlFrame))
 #observation is predicted  a one
 for (i in 1:nrow(dlFrame))
 	{
-		if (dlFrame[i,2] >= .2)
+		if (dlFrame[i,2] >= .5)
 		{
 			dlFrame[i,4] = 1
 		}
@@ -294,9 +294,10 @@ xgFrame2 = xgFrame
 roc(xgFrame[,3],xgFrame[,4])
 
 
+sum(xgFrame[,3])/nrow(xgFrame)
 
 
-
+importance_matrix = as.data.frame(importance_matrix)
 
 ######################################################################################
 ##gbmParse 
