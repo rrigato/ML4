@@ -40,6 +40,66 @@ train2 = train2[,-c(no_var)]
 test2 = test2[,-c(no_var)]
 test = test[,-c(no_var)]
 
+
+
+
+
+
+
+
+extraTreesParse <- function(train5, test5){
+
+	library(extraTrees)
+	library(plyr)
+	#x is the variables used to predict the outcome variable y,
+	#which has to be a factor for classification
+	x = train5[,2:(ncol(train5)-1)]
+	y = as.factor(train5[,ncol(train5)])
+
+
+	 options( java.parameters = "-Xmx6g" )
+	set.seed(27)
+	#calls the extraTrees function 
+	eT = extraTrees(x,y, mtry = 15, nodesize = 5, numRandomCuts = 5,
+		na.action ="zero")
+
+	#returns the probabilities and makes it into a dataframe
+	etOut = predict(eT, newdata = test5[,2:(ncol(test5) -1)])
+	etOut = as.data.frame(etOut)
+
+
+	#initialize output frame
+	etFrame = data.frame(matrix(nrow= nrow(test2), ncol=3))
+	etFrame = rename(etFrame, c("X1" = "id", "X2" = "PredictedProb", "X3" = "actual")) 
+
+	#Puts the ids for the observations into the first column of outputFrame[,1]
+	etFrame[,1] = test5$ID
+
+	#puts the predictions for y being 1 into etFrame2
+	#and the actual in the 2nd column
+	etFrame[,2] = etOut[,2]
+	etFrame[,3] = test5[,2]
+
+	#calls the log loss function to get the actual log_loss from the witheld training data
+	log_loss(etFrame)
+
+	return(etFrame);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 explan = 2:(ncol(train2) -1)
 
 dlFrame = deepL(train2, test2, explan)
