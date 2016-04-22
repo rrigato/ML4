@@ -1,6 +1,7 @@
 
 install.packages("pROC")
 library(pROC)
+library(randomForest)
 setwd("C:\\Users\\Randy\\Downloads\\Kaggle Santander")
 
 train = read.csv("train.csv")
@@ -53,9 +54,10 @@ test = test[,-c(no_var)]
 #
 #
 ###############################################################################
+library(plyr)
 
-ranOut = randomForest( y = as.factor(train2_response), 
-		x = train2Matrix[,keepTop] )
+ranOut = randomForest( y = as.factor(train2[,ncol(train2)]), 
+		x = train2[,2:(ncol(train2)-1)], ntree = 100 )
 ranImportance = as.data.frame(importance(ranOut))
 ranImportance[,2] = rownames(ranImportance)
 ranImportance = rename(ranImportance, c('V2' = 'VarName'))
@@ -72,21 +74,21 @@ keepTop = which(colnames(train2Matrix) %in% ranTop[,2])
 
 
 
-ranPred = predict(ranOut, newdata = test3Matrix, type = 'prob')
+ranPred = predict(ranOut, newdata = test2, type = 'prob')
 
 str(ranPred)
 ranPred = as.data.frame(ranPred)
 
 
 outputFrame4 = data.frame(matrix(nrow= nrow(test2), ncol=4))
-outputFrame4 = rename(outputFrame4, c("X1" = "id", "X2" = "predict_0", "X3" = "predict_1","X4" = "predict_2")) 
-outputFrame4[,1] = test3id
-outputFrame4[,2:4] = ranPred[,1:3]
+outputFrame4 = rename(outputFrame4, c("X1" = "id", 
+	"X2" = "rounded", "X3" = "actual")) 
+outputFrame4[,1] = test2[,1]
+outputFrame4[,2] = ranPred[,2]
+outputFrame4[,3] = test2[,ncol(test2)]
 
 
-
-num_predict = 3
-log_loss(outputFrame4,num_predict)
+roc(outputFrame4[,2], outputFrame4[,3])
 
 
 
