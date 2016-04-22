@@ -46,6 +46,49 @@ test = test[,-c(no_var)]
 
 
 
+################################################################################
+#Random Forest attempt
+#
+#
+#
+#
+###############################################################################
+
+ranOut = randomForest( y = as.factor(train2_response), 
+		x = train2Matrix[,keepTop] )
+ranImportance = as.data.frame(importance(ranOut))
+ranImportance[,2] = rownames(ranImportance)
+ranImportance = rename(ranImportance, c('V2' = 'VarName'))
+
+
+
+ranTop = arrange(ranImportance, MeanDecreaseGini)
+
+ranTop = ranTop[1:250,]
+head(ranTop)
+plot(ranOut)
+keepTop = which(colnames(train2Matrix) %in% ranTop[,2])
+
+
+
+
+ranPred = predict(ranOut, newdata = test3Matrix, type = 'prob')
+
+str(ranPred)
+ranPred = as.data.frame(ranPred)
+
+
+outputFrame4 = data.frame(matrix(nrow= nrow(test2), ncol=4))
+outputFrame4 = rename(outputFrame4, c("X1" = "id", "X2" = "predict_0", "X3" = "predict_1","X4" = "predict_2")) 
+outputFrame4[,1] = test3id
+outputFrame4[,2:4] = ranPred[,1:3]
+
+
+
+num_predict = 3
+log_loss(outputFrame4,num_predict)
+
+
 
 extraTreesParse <- function(train5, test5){
 
@@ -53,7 +96,7 @@ extraTreesParse <- function(train5, test5){
 	library(plyr)
 	#x is the variables used to predict the outcome variable y,
 	#which has to be a factor for classification
-	x = train5[,2:(ncol(train5)-1)]
+	x = train5[,2:(100)]
 	y = as.factor(train5[,ncol(train5)])
 
 
@@ -64,24 +107,27 @@ extraTreesParse <- function(train5, test5){
 		na.action ="zero")
 
 	#returns the probabilities and makes it into a dataframe
-	etOut = predict(eT, newdata = test5[,2:(ncol(test5) -1)])
+	etOut = predict(eT, newdata = test5[,2:(100)])
 	etOut = as.data.frame(etOut)
 
 
 	#initialize output frame
-	etFrame = data.frame(matrix(nrow= nrow(test2), ncol=3))
-	etFrame = rename(etFrame, c("X1" = "id", "X2" = "PredictedProb", "X3" = "actual")) 
+	etFrame = data.frame(matrix(nrow= nrow(test2), ncol=4))
+	etFrame = rename(etFrame, c("X1" = "id", "X2" = "Round",
+		 "X3" = "actual")) 
 
 	#Puts the ids for the observations into the first column of outputFrame[,1]
 	etFrame[,1] = test5$ID
 
 	#puts the predictions for y being 1 into etFrame2
 	#and the actual in the 2nd column
-	etFrame[,2] = etOut[,2]
-	etFrame[,3] = test5[,2]
+	etFrame[,2] = etOut
+	etFrame[,3] = test5[,ncol(test5)]
+
+	
 
 	#calls the log loss function to get the actual log_loss from the witheld training data
-	log_loss(etFrame)
+	roc(etFrame[,2], etFrame[,3])
 
 	return(etFrame);
 }
