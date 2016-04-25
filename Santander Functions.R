@@ -44,6 +44,32 @@ test = test[,-c(no_var)]
 
 
 
+##################################################################
+#glmnet package attempt
+#
+#
+#
+#
+#
+##################################################################
+library(glmnet)
+
+
+glmCV = cv.glmnet(data.matrix(train2[,(2:ncol(train2)-1)]),
+					 train2$TARGET, alpha = 0,
+					 type.measure='auc', family = "binomial")
+glmMod = glmnet(train2[,(2:ncol(train2)-1)], train2$TARGET,
+				family = c("binomial"),standardize = TRUE,
+				
+
+
+
+
+
+
+
+
+
 
 
 
