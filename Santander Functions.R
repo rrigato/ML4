@@ -338,8 +338,8 @@ bst.cv[which(max(bst.cv$test.auc.mean) == bst.cv$test.auc.mean),]
 nround = which(max(bst.cv$test.auc.mean) == bst.cv$test.auc.mean)
 #actual xgboost
 bst = xgboost(param=param, data = train2Matrix, label = train2_response,
-		gamma = .1, eta = .1, nrounds=nround,
-		subsample = .75, max_delta_step = 1)
+		gamma = .001, eta = .001, subsample = .5,
+		 nrounds=nround, max_delta_step = 10)
 
 
 
