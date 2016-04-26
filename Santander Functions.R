@@ -337,10 +337,6 @@ train2Matrix = data.matrix(train2)
 test3Matrix = data.matrix(test3)
 
 
-temp <- sparse.model.matrix(TARGET ~ ., data = train2)
-
-dtrain <- xgb.DMatrix(data=temp, label=train2_response)
-watchlist <- list(train=dtrain)
 
 
 
@@ -359,7 +355,7 @@ numberOfClasses = 2
 param = list( "objective" = "binary:logistic",
 		"booster" = "gbtree",
 		"eval_metric" = "auc",
-		eta = 0.0202048
+		"scale_pos_weight" = nrow(train)/ sum(train$TARGET)
 		)
 cv.nround <- 250
 cv.nfold <- 3
@@ -374,10 +370,9 @@ bst.cv[which(max(bst.cv$test.auc.mean) == bst.cv$test.auc.mean),]
 #sets the number of rounds based on the number of rounds determined by cross_validation
 nround = which(max(bst.cv$test.auc.mean) == bst.cv$test.auc.mean)
 #actual xgboost
-bst = xgboost(param=param, data = dtrain,
-		 subsample = .75,
-		 nrounds=560, max_delta_step = 5, verbose = 1,
-		watchlist = watchlist, maximize = FALSE)
+bst = xgboost(param=param, data = train2Matrix, label = train2_response,
+ 		gamma = .1, eta = .1, subsample = .75,
+	 nrounds=nround, max_delta_step = 10)
 
 
 
@@ -406,9 +401,9 @@ str(bstPred)
 
 
 #initialize output frame
-xgFrame = data.frame(matrix(nrow= nrow(test2), ncol=4))
+xgFrame = data.frame(matrix(nrow= nrow(test2), ncol=3))
 xgFrame = rename(xgFrame, c("X1" = "id", "X2" = "predictedProb",
-			 "X3" = "Actual", "X4" = "rounded")) 
+			 "X3" = "Actual")) 
 
 #Puts the ids for the observations into the first column of xgFrame[,1]
 xgFrame[,1] = test3id
