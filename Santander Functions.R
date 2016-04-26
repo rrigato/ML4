@@ -1,6 +1,6 @@
 
-install.packages("pROC")
-library(pROC)
+install.packages("AUC")
+library(AUC)
 library(randomForest)
 setwd("C:\\Users\\Randy\\Downloads\\Kaggle Santander")
 
@@ -420,27 +420,23 @@ sum(xgFrame[,1] != test3id)
 #probability of y = 1
 xgFrame[,2] = bstPred
 
-xgFrame[,4] = 0
-for (i in 1:nrow(xgFrame))
-	{
-		if (xgFrame[i,2] >= .1)
-		{
-			xgFrame[i,4] = 1
-		}
-	
-
-	}
-
 
 xgFrame2 = xgFrame
 
 
 
 
-roc(xgFrame[,3],xgFrame[,4])
+opCurve = roc(xgFrame[,2],as.factor(xgFrame[,3]))
+auc(opCurve)
+plot(opCurve)
 
 
-sum(xgFrame[,4])/nrow(xgFrame)
+
+#example program
+#auc(roc(churn$predictions,churn$labels))
+#plot(roc(churn$predictions,churn$labels))
+
+sum(xgFrame[,2])/nrow(xgFrame)
 
 
 importance_matrix = as.data.frame(importance_matrix)
