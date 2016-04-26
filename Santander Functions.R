@@ -58,6 +58,12 @@ library(glmnet)
 glmCV = cv.glmnet(data.matrix(train2[,(2:ncol(train2)-1)]),
 					 train2$TARGET, alpha = 0,
 					 type.measure='auc', family = "binomial")
+
+
+glmOut = predict(glmCV,data.matrix(test2[,(2:ncol(test2)-1)]))
+
+glmOut = as.data.frame(glmOut)
+
 glmMod = glmnet(train2[,(2:ncol(train2)-1)], train2$TARGET,
 				family = c("binomial"),standardize = TRUE,
 				
@@ -331,6 +337,10 @@ train2Matrix = data.matrix(train2)
 test3Matrix = data.matrix(test3)
 
 
+temp <- sparse.model.matrix(TARGET ~ ., data = train2)
+
+dtrain <- xgb.DMatrix(data=temp, label=train2_response)
+watchlist <- list(train=dtrain)
 
 
 
@@ -347,8 +357,9 @@ test3Matrix = data.matrix(test3)
 #cross_validation parameters
 numberOfClasses = 2
 param = list( "objective" = "binary:logistic",
+		"booster" = "gbtree",
 		"eval_metric" = "auc",
-		"scale_pos_weight" = nrow(train)/ sum(train$TARGET)
+		eta = 0.0202048
 		)
 cv.nround <- 250
 cv.nfold <- 3
@@ -363,9 +374,10 @@ bst.cv[which(max(bst.cv$test.auc.mean) == bst.cv$test.auc.mean),]
 #sets the number of rounds based on the number of rounds determined by cross_validation
 nround = which(max(bst.cv$test.auc.mean) == bst.cv$test.auc.mean)
 #actual xgboost
-bst = xgboost(param=param, data = train2Matrix, label = train2_response,
-		gamma = .001, eta = .001, subsample = .5,
-		 nrounds=nround, max_delta_step = 10)
+bst = xgboost(param=param, data = dtrain,
+		 subsample = .75,
+		 nrounds=560, max_delta_step = 5, verbose = 1,
+		watchlist = watchlist, maximize = FALSE)
 
 
 
@@ -411,7 +423,7 @@ xgFrame[,2] = bstPred
 xgFrame[,4] = 0
 for (i in 1:nrow(xgFrame))
 	{
-		if (xgFrame[i,2] >= .5)
+		if (xgFrame[i,2] >= .1)
 		{
 			xgFrame[i,4] = 1
 		}
@@ -428,7 +440,7 @@ xgFrame2 = xgFrame
 roc(xgFrame[,3],xgFrame[,4])
 
 
-sum(xgFrame[,3])/nrow(xgFrame)
+sum(xgFrame[,4])/nrow(xgFrame)
 
 
 importance_matrix = as.data.frame(importance_matrix)
