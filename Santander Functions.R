@@ -206,6 +206,19 @@ sum(dlFrame[,4])/nrow(dlFrame)
 #Reciever operating curve for predictions and actual
 roc(dlFrame[,4],dlFrame[,3])
 
+
+
+
+
+
+
+
+
+
+
+train5 = train2
+test5 =test2
+explanFeatures = 2:(ncol(train2) - 1)
 ######################################################################
 #Deep Learning in H2o log_loss:.4868497
 #
@@ -238,7 +251,7 @@ deepL <- function(train5, test5, explanFeatures)
 	#builds the deep learning neural nets using only the features in explanFeatures
 	#2 is the outcome feature
 	trainDL = h2o.deeplearning(x = explanFeatures, y = 2 ,
-	hidden = c(10), rho = .99, epochs = 25,
+	hidden = c(5), rho = .99, epochs = 75,
 	 training_frame = train5)
 
 	#makes probability predictions on the test5 data using the model built
@@ -253,15 +266,20 @@ deepL <- function(train5, test5, explanFeatures)
 	outputFrame = rename(outputFrame, c("X1" = "ID", "X2" = "PredictedProb", "X3" = "actual"))
 	
 	#adds ids back into outputFrame
-	outputFrame[,1] = test2[,1]
+	outputFrame[,1] = test5[,1]
 
 	#adds the predicted values from the model
 	outputFrame[,2] = DLPred
 	
 	#adds the actual output to the output frame
-	outputFrame[,3] = test2$TARGET
+	outputFrame[,3] = test5$TARGET
 
 	#put roc here
+	
+	opCurve = roc(outputFrame[,2],as.factor(outputFrame[,3]))
+	auc(opCurve)
+	plot(opCurve)
+
 
 	#returns the probabilities in a data frame
 	return(outputFrame);
@@ -353,9 +371,8 @@ test3Matrix = data.matrix(test3)
 #cross_validation parameters
 numberOfClasses = 2
 param = list( "objective" = "binary:logistic",
-		"booster" = "gbtree",
-		"eval_metric" = "auc",
-		"scale_pos_weight" = nrow(train)/ sum(train$TARGET)
+		#"booster" = "gbtree",
+		"eval_metric" = "auc"
 		)
 cv.nround <- 250
 cv.nfold <- 3
@@ -371,7 +388,7 @@ bst.cv[which(max(bst.cv$test.auc.mean) == bst.cv$test.auc.mean),]
 nround = which(max(bst.cv$test.auc.mean) == bst.cv$test.auc.mean)
 #actual xgboost
 bst = xgboost(param=param, data = train2Matrix, label = train2_response,
- 		gamma = .1, eta = .1, subsample = .75,
+ 		 eta = .01, subsample = .75,
 	 nrounds=nround, max_delta_step = 10)
 
 
@@ -435,6 +452,40 @@ sum(xgFrame[,2])/nrow(xgFrame)
 
 
 importance_matrix = as.data.frame(importance_matrix)
+
+
+
+
+
+######################################################################################
+#
+#
+#feature_selection
+####################################################################################
+
+
+importance_matrix = as.data.frame(importance_matrix)
+
+
+#gets the names of the variables that matter
+top124 = importance_matrix[,1]
+
+
+#gets all the names in train2Matrix
+train2Col = colnames(train2Matrix)
+
+#gets the column numbers of the variables you should keep
+keep = which(train2Col %in%  top124)
+
+
+
+
+
+
+
+
+
+
 
 ######################################################################################
 ##gbmParse 
