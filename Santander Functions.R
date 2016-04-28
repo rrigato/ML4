@@ -88,8 +88,16 @@ glmMod = glmnet(train2[,(2:ncol(train2)-1)], train2$TARGET,
 ###############################################################################
 library(plyr)
 
+
+#remember to do a keep = keep + 1 before running a random forest model 
+#with optimized feature selection
+#The reason for this is because the train2Matrix doesn't have ids 
+#so this creates an off by one error for regular train dataset
+
+#keep = keep +1
+
 ranOut = randomForest( y = as.factor(train2[,ncol(train2)]), 
-		x = train2[,2:(ncol(train2)-1)], ntree = 100 )
+		x = train2[,keep], ntree = 100 )
 ranImportance = as.data.frame(importance(ranOut))
 ranImportance[,2] = rownames(ranImportance)
 ranImportance = rename(ranImportance, c('V2' = 'VarName'))
@@ -112,7 +120,7 @@ str(ranPred)
 ranPred = as.data.frame(ranPred)
 
 
-outputFrame4 = data.frame(matrix(nrow= nrow(test2), ncol=4))
+outputFrame4 = data.frame(matrix(nrow= nrow(test2), ncol=3))
 outputFrame4 = rename(outputFrame4, c("X1" = "id", 
 	"X2" = "rounded", "X3" = "actual")) 
 outputFrame4[,1] = test2[,1]
@@ -120,8 +128,9 @@ outputFrame4[,2] = ranPred[,2]
 outputFrame4[,3] = test2[,ncol(test2)]
 
 
-roc(outputFrame4[,2], outputFrame4[,3])
-
+	opCurve = roc(outputFrame4[,2],as.factor(outputFrame4[,3]))
+	auc(opCurve)
+	plot(opCurve)
 
 
 extraTreesParse <- function(train5, test5){
@@ -388,8 +397,8 @@ bst.cv[which(max(bst.cv$test.auc.mean) == bst.cv$test.auc.mean),]
 nround = which(max(bst.cv$test.auc.mean) == bst.cv$test.auc.mean)
 #actual xgboost
 bst = xgboost(param=param, data = train2Matrix, label = train2_response,
- 		 eta = .01, subsample = .75,
-	 nrounds=nround, max_delta_step = 10)
+ 		 eta = .1, subsample = .75, colsample_bytree = .70,
+	 nrounds=nround, max_delta_step = 5)
 
 
 
