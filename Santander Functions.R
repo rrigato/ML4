@@ -17,7 +17,7 @@ plot(train$ID,train$TARGET,  type = 'p')
 
 
 #calls the split function to divide the train dataset
-bothFrames = split(train, .85)
+bothFrames = split(train, 1)
 train2 = bothFrames[[1]]
 test2 = bothFrames[[2]]
 
@@ -325,7 +325,7 @@ library(Matrix)
 library(plyr)
 
 
-
+train2[,2:(ncol(train2)-1)] = log(train2[,2:(ncol(train2)-1)])
 
 #stores the ids in a vector and removes id from data frames
 train2id = train2[,1]
@@ -372,6 +372,10 @@ test3Matrix = data.matrix(test3)
 #test3Matrix = test3Matrix[,keep]
 
 
+#trainM <- sparse.model.matrix(TARGET ~ ., data = train2)
+
+#dtrain <- xgb.DMatrix(data=trainM, label=train2_response)
+#watchlist <- list(train2=dtrain)
 
 
 
@@ -380,15 +384,15 @@ test3Matrix = data.matrix(test3)
 #cross_validation parameters
 numberOfClasses = 2
 param = list( "objective" = "binary:logistic",
-		#"booster" = "gbtree",
+		"booster" = "gbtree",
 		"eval_metric" = "auc"
 		)
 cv.nround <- 250
 cv.nfold <- 3
 
 #setting up cross_validation
-bst.cv = xgb.cv(param=param, data = train2Matrix, label = train2_response, 
-                nfold = cv.nfold, nrounds = cv.nround)
+bst.cv = xgb.cv(param=param, data = dtrain, label = train2_response, 
+                nfold = cv.nfold, nrounds = cv.nround, missing = 'NAN')
 
 #test for optimal nround
 bst.cv[which(max(bst.cv$test.auc.mean) == bst.cv$test.auc.mean),]
@@ -396,9 +400,9 @@ bst.cv[which(max(bst.cv$test.auc.mean) == bst.cv$test.auc.mean),]
 #sets the number of rounds based on the number of rounds determined by cross_validation
 nround = which(max(bst.cv$test.auc.mean) == bst.cv$test.auc.mean)
 #actual xgboost
-bst = xgboost(param=param, data = train2Matrix, label = train2_response,
+bst = xgboost(param=param, data = dtrain, label = train2_response,
  		 eta = .1, subsample = .75, colsample_bytree = .70,
-	 nrounds=nround, max_delta_step = 5)
+	 nrounds=nround, max_delta_step = 5, watchlist = watchlist)
 
 
 
