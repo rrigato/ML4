@@ -17,7 +17,7 @@ plot(train$ID,train$TARGET,  type = 'p')
 
 
 #calls the split function to divide the train dataset
-bothFrames = split(train, 1)
+bothFrames = split(train, .85)
 train2 = bothFrames[[1]]
 test2 = bothFrames[[2]]
 
@@ -325,7 +325,7 @@ library(Matrix)
 library(plyr)
 
 
-train2[,2:(ncol(train2)-1)] = log(train2[,2:(ncol(train2)-1)])
+
 
 #stores the ids in a vector and removes id from data frames
 train2id = train2[,1]
@@ -385,13 +385,16 @@ test3Matrix = data.matrix(test3)
 numberOfClasses = 2
 param = list( "objective" = "binary:logistic",
 		"booster" = "gbtree",
-		"eval_metric" = "auc"
+		"eval_metric" = "auc",
+			"eta" = .1,
+		 "subsample" = .75,
+		"gamma" = .1
 		)
 cv.nround <- 250
 cv.nfold <- 3
 
 #setting up cross_validation
-bst.cv = xgb.cv(param=param, data = dtrain, label = train2_response, 
+bst.cv = xgb.cv(param=param, data = train2Matrix, label = train2_response, 
                 nfold = cv.nfold, nrounds = cv.nround, missing = 'NAN')
 
 #test for optimal nround
@@ -400,9 +403,8 @@ bst.cv[which(max(bst.cv$test.auc.mean) == bst.cv$test.auc.mean),]
 #sets the number of rounds based on the number of rounds determined by cross_validation
 nround = which(max(bst.cv$test.auc.mean) == bst.cv$test.auc.mean)
 #actual xgboost
-bst = xgboost(param=param, data = dtrain, label = train2_response,
- 		 eta = .1, subsample = .75, colsample_bytree = .70,
-	 nrounds=nround, max_delta_step = 5, watchlist = watchlist)
+bst = xgboost(param=param, data =  train2Matrix, label = train2_response,	 
+	 nrounds=nround, max_delta_step = 5, missing = 'NAN')
 
 
 
@@ -428,6 +430,32 @@ importance_matrix <- xgb.importance(names, model = bst); importance_matrix
 bstPred = predict(bst, test3Matrix)
 is.vector(bstPred)
 str(bstPred)
+
+
+
+
+nv = tc['num_var33']+tc['saldo_medio_var33_ult3']+tc['saldo_medio_var44_hace2']+tc['saldo_medio_var44_hace3']+
+tc['saldo_medio_var33_ult1']+tc['saldo_medio_var44_ult1']
+
+preds[nv > 0] = 0
+preds[tc['var15'] < 23] = 0
+preds[tc['saldo_medio_var5_hace2'] > 160000] = 0
+preds[tc['saldo_var33'] > 0] = 0
+preds[tc['var38'] > 3988596] = 0
+preds[tc['var21'] > 7500] = 0
+preds[tc['num_var30'] > 9] = 0
+preds[tc['num_var13_0'] > 6] = 0
+preds[tc['num_var33_0'] > 0] = 0
+preds[tc['imp_ent_var16_ult1'] > 51003] = 0
+preds[tc['imp_op_var39_comer_ult3'] > 13184] = 0
+preds[tc['saldo_medio_var5_ult3'] > 108251] = 0
+preds[tc['num_var37_0'] > 45] = 0
+preds[tc['saldo_var5'] > 137615] = 0
+preds[tc['saldo_var8'] > 60099] = 0
+preds[(tc['var15']+tc['num_var45_hace3']+tc['num_var45_ult3']+tc['var36']) <= 24] = 0
+
+
+
 
 
 #initialize output frame

@@ -81,7 +81,7 @@ test3 = test[,-c(1)]
 #the data frames
 
 length(test3id) == nrow(test3)
-
+ 
 
 test3Matrix = data.matrix(test3)
 
@@ -126,7 +126,7 @@ sum(finalFrame[,2])
 sum(finalFrame[,2])/nrow(test)
 
 
-write.csv(finalFrame, "C:\\Users\\Randy\\Downloads\\Kaggle Santander\\Results5.csv",
+write.csv(finalFrame, "C:\\Users\\Randy\\Downloads\\Kaggle Santander\\Results9.csv",
 		row.names = FALSE)
 
 

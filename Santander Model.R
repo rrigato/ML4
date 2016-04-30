@@ -79,7 +79,7 @@ watchlist <- list(train=dtrain)
 param <- list(  objective           = "binary:logistic", 
                 booster             = "gbtree",
                 eval_metric         = "auc",
-                eta                 = 0.0202048,
+                eta                 = 0.1,
                 max_depth           = 5,
                 subsample           = 0.6815,
                 colsample_bytree    = 0.701
@@ -87,7 +87,7 @@ param <- list(  objective           = "binary:logistic",
 
 clf <- xgb.train(   params              = param, 
                     data                = dtrain, 
-                    nrounds             = 560, 
+                    nrounds             = 150, 
                     verbose             = 1,
                     watchlist           = watchlist,
                     maximize            = FALSE
@@ -133,6 +133,35 @@ preds[tc['saldo_var8'] > 60099] = 0
 preds[(tc['var15']+tc['num_var45_hace3']+tc['num_var45_ult3']+tc['var36']) <= 24] = 0
 
 
+
+
+
+cv.nround <- 250
+cv.nfold <- 4
+
+#setting up cross_validation
+bst.cv = xgb.cv(param=param, data = dtrain,  
+                nfold = cv.nfold, nrounds = cv.nround, missing = 'NAN')
+
+
+
+
+#most important features
+importance_matrix <- xgb.importance(names, model = clf)
+importance_matrix = as.data.frame(importance_matrix)
+
+
+#total sum of probability 
+#for train this is about 3.956853%
+sum(preds)/nrow(test)
+
+
+
+
+
+
+
+
 # BAD
 # num_var35 = tc['num_var35']
 # saldo_var30 = tc['saldo_var30']
@@ -145,7 +174,7 @@ preds[(tc['var15']+tc['num_var45_hace3']+tc['num_var45_ult3']+tc['var36']) <= 24
 
 submission <- data.frame(ID=test.id, TARGET=preds)
 cat("saving the submission file\n")
-write.csv(submission, "submission.csv", row.names = F)
+write.csv(submission, "Results7.csv", row.names = F)
 
 
 
