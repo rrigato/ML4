@@ -163,7 +163,7 @@ sum(finalFrame[,2])
 sum(finalFrame[,2])/nrow(test)
 
 
-write.csv(finalFrame, "C:\\Users\\Randy\\Downloads\\Kaggle Santander\\Results11.csv",
+write.csv(finalFrame, "C:\\Users\\Randy\\Downloads\\Kaggle Santander\\Results13.csv",
 		row.names = FALSE)
 
 

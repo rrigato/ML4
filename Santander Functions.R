@@ -12,12 +12,10 @@ test = read.csv("test.csv")
 
 sum(train$TARGET)/nrow(train)
 
-plot(train$ID,train$TARGET,  type = 'p')
-
 
 
 #calls the split function to divide the train dataset
-bothFrames = split(train, .85)
+bothFrames = split(train, 1)
 train2 = bothFrames[[1]]
 test2 = bothFrames[[2]]
 
@@ -387,11 +385,12 @@ param = list( "objective" = "binary:logistic",
 		"booster" = "gbtree",
 		"eval_metric" = "auc",
 			"eta" = .1,
-		 "subsample" = .75,
-		"gamma" = .1
+		 "subsample" = .55,
+		"gamma" = .1,
+		"max_delta_step" = 5
 		)
 cv.nround <- 250
-cv.nfold <- 3
+cv.nfold <- 5
 
 #setting up cross_validation
 bst.cv = xgb.cv(param=param, data = train2Matrix, label = train2_response, 
@@ -404,7 +403,7 @@ bst.cv[which(max(bst.cv$test.auc.mean) == bst.cv$test.auc.mean),]
 nround = which(max(bst.cv$test.auc.mean) == bst.cv$test.auc.mean)
 #actual xgboost
 bst = xgboost(param=param, data =  train2Matrix, label = train2_response,	 
-	 nrounds=nround, max_delta_step = 5, missing = 'NAN')
+	 nrounds=nround,  missing = 'NAN')
 
 
 
